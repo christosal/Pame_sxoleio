@@ -1,10 +1,14 @@
 var game;
 var mainmenuSound;
 var agonySound;
+var eventDispatcher = new Phaser.Signal();
+var model;
+var controller;
+
 
 var gameOptions = {
     gameHeight: 1334,
-    backgroundColor: "#0b5217"
+    backgroundColor: "#0b7e1e"
 }
 
 var facebookStuff = {
@@ -20,6 +24,8 @@ function Question(id,title,answer1,answer2,answer3,answer4){
     this.answer3 = answer3,
     this.answer4 = answer4
 }
+
+var question1 = new Question(0,"Διάλεξε την σωστή απάντηση",{context:"πείθω",correct:true},{context:"πύθω",correct:false},{context:"πήθω",correct:false},{context:"ποίθω",correct:false}) 
 
  
 FBInstant.initializeAsync().then(function() {
@@ -53,6 +59,9 @@ boot.prototype = {
         game.scale.pageAlignVertically = true;
         game.stage.disableVisibilityChange = true;
         game.stage.backgroundColor = gameOptions.backgroundColor;
+        this.game.add.text(0, 0, "hack", {font:"1px greek_main", fill:"#FFFFFF"});
+        model = new Model();
+        
         game.state.start("Preload");
     }
 }
@@ -66,6 +75,7 @@ preload.prototype = {
         game.load.setPreloadSprite(loadingBar);
         game.load.image("playbutton", "assets/sprites/playbutton.png");
         game.load.image("profilepicture", facebookStuff.picture);
+        game.load.image("background","assets/sprites/background.jpg")
         game.load.image("homebutton", "assets/sprites/homebutton.png");
         game.load.image("logo", "assets/sprites/logo.png");
         game.load.bitmapFont("font", "assets/fonts/font.png", "assets/fonts/font.fnt");
@@ -86,6 +96,7 @@ var titleScreen = function(){};
 titleScreen.prototype = {
     create: function(){
         // savedData = localStorage.getItem(gameOptions.localStorageName) == null ? {score: 0} : JSON.parse(localStorage.getItem(gameOptions.localStorageName));
+        var background = new Background("background");
         var logo = game.add.image(game.width / 2, 0, "logo");
         logo.anchor.set(0.5, 0);
         logo.width = 500;
@@ -125,10 +136,24 @@ var playGame = function(game){};
 
 playGame.prototype = {
     create: function(){
-        var question1 = new Question(0,"Διάλεξε την σωστή απάντηση",{context:"πείθω",correct:true},{context:"πύθω",correct:false},{context:"πήθω",correct:false},{context:"ποίθω",correct:false}) 
+        var background = new Background("background");
+        var style = { 
+            font: "38px greek_main",
+            align: "left",
+            fill: "#fff",
+            wordWrap: { width: 450, useAdvancedWrap: true }
+        }
+        
         agonySound = game.add.audio("agony");
         agonySound.play();
-        game.add.bitmapText(game.width / 2, 320, "font", question1.title, 30).anchor.set(0.5, 1);
+        var title = this.game.add.text(game.width/3, 320,question1.title, style).anchor.set(0, 1);
+        var answer1 = new GButton(question1.answer1.context,"checkAnswer",1,game.width-80,"#ffffff",32,"#303030");
+        
+        answer1.x=10;
+        answer1.y=game.height/2+50;
+        var answer2;
+        var answer3;
+        var answer4;
         //game.input.onDown.add(this.changeBall, this);
         
         this.homeButton = game.add.button(game.width / 2, game.height, "homebutton", function(){
@@ -136,6 +161,15 @@ playGame.prototype = {
             game.state.start("TitleScreen");
         });
         this.homeButton.anchor.set(0.5, 1);
+    },
+    checkAnswer:function(key){
+        correctSound = game.add.audio("agony");
+        console.log("pressed");
+        if (key==1){
+            agonySound.destroy();
+            correctSound.play();
+            answer1.buttonBack.beginFill(0x00FF00, 1);
+        }
     },
     update: function(){
         
